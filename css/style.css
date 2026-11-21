@@ -1,0 +1,606 @@
+/* ============================================================
+   MemoryBridge — warm, senior-friendly styling
+   ============================================================ */
+
+:root {
+  --bg: #fdf6ec;            /* soft cream */
+  --surface: #ffffff;
+  --ink: #3d2c1e;           /* warm dark brown, high contrast on cream */
+  --ink-soft: #6b5138;
+  --accent: #c2571f;        /* warm terracotta — 5.5:1 on white */
+  --accent-dark: #9a4416;
+  --accent-soft: #fde4d0;
+  --gold: #e9a319;
+  --border: #e8d5bd;
+  --radius: 20px;
+  --shadow: 0 6px 18px rgba(93, 58, 22, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+/* the hidden attribute must always win over display:flex/grid rules */
+[hidden] { display: none !important; }
+
+html { font-size: 18px; } /* large base text for easy reading */
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", "Segoe UI", serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* iOS safe areas: keep content clear of the notch and home indicator
+     when the app runs standalone (added to Home Screen). */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* iOS Safari zooms into any input with font-size < 16px — never let that
+   happen, and give inputs the warm body background so autofill looks right. */
+.text-input, .text-area, select.text-input {
+  font-size: 1.15rem; /* 18px+ at base — above the 16px zoom threshold */
+  background: #fffdf9;
+}
+input, textarea, select, button { font-family: inherit; }
+
+/* iOS safe-area padding for the fixed-position header */
+.app-header {
+  padding-top: calc(1rem + env(safe-area-inset-top));
+  padding-bottom: 1rem;
+}
+
+/* ---------- Header ---------- */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #fff8ef, #fdeedd);
+  border-bottom: 3px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent-dark);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+.brand-icon { font-size: 1.6rem; }
+
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.nav-btn {
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.nav-btn:hover { background: var(--accent-soft); }
+.nav-btn:active { transform: scale(0.97); }
+.nav-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: bold;
+}
+
+/* ---------- Views ---------- */
+main { flex: 1; }
+
+.view { animation: fadeIn 0.35s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.view-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.page-title {
+  font-size: 2.2rem;
+  margin: 0.75rem 0 0.25rem;
+  color: var(--accent-dark);
+}
+.page-subtitle {
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.5rem;
+}
+
+/* ---------- Home big cards ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.big-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  text-align: left;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem 1.75rem;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.big-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+.big-card:focus-visible, .nav-btn:focus-visible, .btn:focus-visible,
+.upload-zone:focus-visible, .brand:focus-visible {
+  outline: 4px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.big-card-icon { font-size: 3rem; }
+.big-card-title {
+  font-size: 1.7rem;
+  font-weight: bold;
+  color: var(--accent-dark);
+}
+.big-card-desc { font-size: 1.1rem; color: var(--ink-soft); }
+.big-card-cta {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.privacy-note {
+  margin-top: 2rem;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 0.9rem 1.2rem;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem 1.5rem 1.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.panel-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.45rem;
+  color: var(--accent-dark);
+}
+.panel-note { font-size: 1.05rem; color: var(--ink-soft); margin-top: 0; }
+
+/* ---------- Upload zone ---------- */
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2.25rem 1rem;
+  border: 3px dashed var(--accent);
+  border-radius: var(--radius);
+  background: #fff9f2;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s;
+}
+.upload-zone:hover, .upload-zone.dragover { background: var(--accent-soft); }
+.upload-icon { font-size: 2.6rem; }
+.upload-text { font-size: 1.3rem; font-weight: bold; color: var(--accent-dark); }
+.upload-hint { font-size: 1rem; color: var(--ink-soft); }
+
+/* ---------- Photo preview ---------- */
+.photo-preview-area {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.photo-preview-area img {
+  max-width: 100%;
+  max-height: 420px;
+  border-radius: var(--radius);
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  font-size: 1.15rem;
+  padding: 0.85rem 1.6rem;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-xl { font-size: 1.3rem; padding: 1.05rem 1.8rem; width: 100%; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  font-weight: bold;
+}
+.btn-primary:hover { background: var(--accent-dark); }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--accent-dark);
+  border-color: var(--accent);
+  font-weight: bold;
+}
+.btn-secondary:hover { background: var(--accent-soft); }
+
+.btn-stack { display: grid; gap: 0.85rem; max-width: 520px; }
+
+/* ---------- Coming soon / status ---------- */
+.coming-soon {
+  margin-top: 1.25rem;
+  background: #fff4d6;
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 0.9rem 1.2rem;
+  font-size: 1.02rem;
+}
+
+.save-status { font-size: 1.05rem; color: #1e7a3c; font-weight: bold; min-height: 1.4em; margin: 0.6rem 0 0; }
+.save-status.error { color: #b3261e; }
+
+/* ---------- Story editor / audio / memory playback ---------- */
+.story-editor { margin-top: 1.25rem; display: grid; gap: 0.85rem; max-width: 560px; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.btn-row .btn { width: auto; flex: 1 1 160px; }
+
+.audio-preview {
+  margin-top: 1.25rem;
+  background: #fff9f2;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+.audio-preview audio {
+  width: 100%;
+  margin-top: 0.5rem;
+  height: 48px;
+}
+
+.record-pulse {
+  animation: pulse 1.4s ease-in-out infinite;
+  background: #b3261e !important;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.memory-stage {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  background: #fff9f2;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.memory-stage img {
+  max-width: 100%;
+  max-height: 340px;
+  border-radius: 14px;
+  border: 3px solid var(--border);
+}
+.memory-stage .panel-note {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: var(--accent-dark);
+  text-align: center;
+}
+
+/* ---------- Memory export / share ---------- */
+.memory-actions {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 3px solid var(--border);
+}
+.memory-actions .btn-row {
+  margin-top: 0.75rem;
+  max-width: 560px;
+}
+
+.export-progress {
+  margin-top: 1rem;
+  max-width: 560px;
+  height: 18px;
+  border-radius: 999px;
+  background: #f1e3d0;
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+.export-progress-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+  transition: width 0.3s ease;
+}
+/* ---------- Forms ---------- */
+.form-grid { display: grid; gap: 1.15rem; }
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.field-label { font-size: 1.15rem; font-weight: bold; }
+
+.text-input, .text-area {
+  font: inherit;
+  font-size: 1.15rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: #fffdf9;
+  color: var(--ink);
+  width: 100%;
+}
+.text-input:focus, .text-area:focus { border-color: var(--accent); outline: none; }
+
+.story-editor { margin-top: 1.25rem; display: grid; gap: 0.85rem; max-width: 560px; }
+
+/* ---------- Thumbnails (birthday) ---------- */
+.thumb-list {
+  list-style: none;
+  margin: 1.25rem 0 0.75rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+.thumb-item {
+  position: relative;
+  width: 130px;
+}
+.thumb-item img {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 3px solid var(--border);
+  display: block;
+}
+.thumb-remove {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #b3261e;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.thumb-remove:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+.empty-hint { color: var(--ink-soft); font-size: 1.02rem; }
+
+/* ---------- Slideshow ---------- */
+.slideshow-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+.slideshow-controls .btn { width: auto; flex: 1 1 220px; }
+
+.slideshow-stage {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 4px solid var(--border);
+  box-shadow: var(--shadow);
+  background: #2a1c10;
+}
+.slideshow-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* photo reorder / remove controls on thumbnails */
+.thumb-controls {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+.thumb-controls button {
+  font: inherit;
+  font-size: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1;
+}
+.thumb-controls button:hover { background: var(--accent-soft); }
+.thumb-controls .thumb-remove {
+  position: static;
+  width: 40px;
+  height: 40px;
+  border-color: #b3261e;
+  background: #b3261e;
+  color: #fff;
+}
+
+/* ---------- Footer ---------- */
+.app-footer {
+  text-align: center;
+  padding: 1.25rem;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  border-top: 3px solid var(--border);
+  background: #fff8ef;
+}
+
+/* ---------- Skip link ---------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 0 0 10px 0;
+  z-index: 100;
+}
+.skip-link:focus { left: 0; }
+
+/* ---------- My Memories ---------- */
+.storage-note {
+  background: var(--accent-soft);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.2rem;
+  font-size: 1.02rem;
+  margin-bottom: 1rem;
+}
+.storage-note p { margin: 0; }
+
+.storage-usage {
+  font-size: 1.02rem;
+  color: var(--ink-soft);
+  min-height: 1.4em;
+  margin: 0 0 1rem;
+}
+
+.memory-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.memory-card-thumb {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  background: #f1e3d0;
+}
+.memory-card-body { padding: 0.9rem 1.1rem 0.3rem; }
+.memory-card-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--accent-dark);
+}
+.memory-card-meta {
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
+}
+.memory-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.75rem 1.1rem 1.1rem;
+}
+
+.rename-dialog {
+  margin-top: 1.5rem;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  max-width: 480px;
+}
+
+/* ---------- Birthday Wish Helper ---------- */
+.wish-assistant {
+  margin-top: 1.25rem;
+  background: #fff9f2;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.wish-option {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-top: 0.75rem;
+}
+.wish-option-text {
+  font-size: 1.15rem;
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 680px) {
+  html { font-size: 17px; }
+  .app-header { justify-content: center; text-align: center; }
+  nav { justify-content: center; }
+  .page-title { font-size: 1.75rem; }
+  .card-grid { grid-template-columns: 1fr; }
+  .big-card { padding: 1.5rem 1.25rem; }
+  .slideshow-controls .btn { flex: 1 1 100%; }
+  .thumb-item { width: calc(33.33% - 0.6rem); }
+  .thumb-item img { width: 100%; height: 100px; }
+
+  /* iPhone: comfortable minimum 44x44pt touch targets, and keep the
+     bottom controls clear of the home indicator. */
+  .btn { min-height: 48px; }
+  .nav-btn { min-height: 44px; }
+  .thumb-remove { width: 40px; height: 40px; }
+  .view-inner { padding-bottom: calc(3rem + env(safe-area-inset-bottom)); }
+  .app-footer { padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+  audio { height: 54px; } /* taller iOS-friendly playback bar */
+}
+
+/* Small phones (iPhone SE class): trim the biggest paddings */
+@media (max-width: 380px) {
+  html { font-size: 16px; }
+  .brand { font-size: 1.3rem; }
+}

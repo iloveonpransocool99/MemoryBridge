@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!-- DEV-ONLY test harness for TalkingPhotos. Not part of the user-facing app.
+     It injects the REAL #view-talking markup from index.html, then feeds a
+     real photo file and a real generated WAV through the module's own paths. -->
+<html lang="en">
+<head><meta charset="UTF-8"><title>MemoryBridge dev test — talking</title>
+<link rel="stylesheet" href="css/style.css"></head>
+<body>
+<main style="padding:2rem; max-width:900px; margin:0 auto;">
+  <h1 style="color:#c2571f">Dev test: talking photos</h1>
+  <div id="mount"></div>
+  <p><button id="test-attach">Attach test audio</button></p>
+  <p><button id="test-record">Record 2s via module</button></p>
+  <p><button id="test-export">Export test video</button></p>
+  <p><button id="test-inspect">Inspect last video</button></p>
+  <p><button id="test-audiocheck">Check audio in video</button></p>
+</main>
+<script src="js/storage.js"></script>
+<script src="js/db.js"></script>
+<script src="js/video-export.js"></script>
+<script src="js/talking.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', async () => {
+  // Pull the real Talking Photos markup out of index.html.
+  const html = await fetch('index.html').then(r => r.text());
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const view = doc.getElementById('view-talking');
+  view.hidden = false;
+  document.getElementById('mount').appendChild(view);
+
+  TalkingPhotos.init();
+
+  // Real photo through the module's own loadPhoto path.
+  const c = document.createElement('canvas'); c.width = 640; c.height = 480;
+  const x = c.getContext('2d');
+  x.fillStyle = '#c2571f'; x.fillRect(0, 0, 640, 480);
+  x.fillStyle = '#fff'; x.font = 'bold 72px Georgia'; x.fillText('Family 1995', 130, 250);
+  const photoBlob = await new Promise(r => c.toBlob(r, 'image/png'));
+  TalkingPhotos._testLoadPhoto(new File([photoBlob], 'family-1995.png', { type: 'image/png' }));
+
+  // Real 1.5-second 440 Hz WAV, attached via the module's own audio path.
+  const sampleRate = 22050, seconds = 1.5;
+  const numSamples = Math.floor(sampleRate * seconds);
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view2 = new DataView(buffer);
+  const wstr = (off, s) => { for (let i = 0; i < s.length; i++) view2.setUint8(off + i, s.charCodeAt(i)); };
+  wstr(0, 'RIFF'); view2.setUint32(4, 36 + numSamples * 2, true); wstr(8, 'WAVE');
+  wstr(12, 'fmt '); view2.setUint32(16, 16, true); view2.setUint16(20, 1, true);
+  view2.setUint16(22, 1, true); view2.setUint32(24, sampleRate, true);
+  view2.setUint32(28, sampleRate * 2, true); view2.setUint16(32, 2, true);
+  view2.setUint16(34, 16, true); wstr(36, 'data'); view2.setUint32(40, numSamples * 2, true);
+  for (let i = 0; i < numSamples; i++) {
+    view2.setInt16(44 + i * 2, Math.sin(2 * Math.PI * 440 * i / sampleRate) * 12000, true);
+  }
+  const wav = new File([buffer], 'memory-tone.wav', { type: 'audio/wav' });
+  document.getElementById('test-attach').addEventListener('click', () => {
+    TalkingPhotos._testAttachAudio(wav);
+  });
+
+  // Real 2-second microphone recording through the app's own recorder path,
+  // so export can be tested with genuinely recorded audio.
+  document.getElementById('test-record').addEventListener('click', async () => {
+    const recordBtn = document.getElementById('tp-record-btn');
+    recordBtn.click();                     // start
+    await new Promise(r => setTimeout(r, 2000));
+    recordBtn.click();                     // stop
+    await new Promise(r => setTimeout(r, 500));
+  });
+
+  // Video export check: run the exporter directly and report the result.
+  document.getElementById('test-export').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-export');
+    const audioBlob = await fetch(document.getElementById('tp-audio-player').src).then(r => r.blob());
+    const imgEl = document.getElementById('tp-photo-preview');
+    try {
+      const result = await VideoExporter.exportVideo(imgEl.src, audioBlob, {
+        onProgress: (f) => { statusEl.textContent = `progress ${Math.round(f*100)}%`; }
+      });
+      window._lastVideo = result;
+      statusEl.textContent = `OK size=${result.blob.size} type=${result.mimeType} ext=${result.ext}`;
+    } catch (err) {
+      statusEl.textContent = 'ERROR: ' + err.message;
+    }
+  });
+
+  // Inspect the produced video: load it into a <video> and read metadata.
+  document.getElementById('test-inspect').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-inspect');
+    if (!window._lastVideo) { statusEl.textContent = 'export first'; return; }
+    const v = document.createElement('video');
+    v.src = URL.createObjectURL(window._lastVideo.blob);
+    v.muted = false;
+    await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = () => rej(new Error('cannot decode')); });
+    const hasAudio = v.mozHasAudio || v.webkitAudioDecodedByteCount > 0 ||
+      (v.audioTracks ? v.audioTracks.length > 0 : 'unknown');
+    statusEl.textContent = `duration=${v.duration.toFixed(2)}s video=${v.videoWidth}x${v.videoHeight} audioTrack=${hasAudio}`;
+    // also try playing with sound to prove the audio decodes
+    try { await v.play(); await new Promise(r => setTimeout(r, 800)); v.pause();
+      statusEl.textContent += ` playOK currentTime=${v.currentTime.toFixed(2)}`;
+    } catch (e) { statusEl.textContent += ' playFailed:' + e.name; }
+  });
+
+  // Prove the exported file contains a decodable AUDIO track: decode its
+  // audio bytes with Web Audio and measure loudness.
+  document.getElementById('test-audiocheck').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-audiocheck');
+    if (!window._lastVideo) { statusEl.textContent = 'export first'; return; }
+    try {
+      const buf = await window._lastVideo.blob.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ctx.decodeAudioData(buf);
+      const data = decoded.getChannelData(0);
+      let peak = 0; for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+      ctx.close();
+      statusEl.textContent = `audioOK channels=${decoded.numberOfChannels} duration=${decoded.duration.toFixed(2)}s peak=${peak.toFixed(3)}`;
+    } catch (e) {
+      statusEl.textContent = 'AUDIO DECODE FAILED: ' + e.message;
+    }
+  });
+});
+</script>
+</body>
+</html>

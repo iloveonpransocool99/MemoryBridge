@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!-- DEV-ONLY test harness for BirthdayMaker. Not part of the user-facing app. -->
+<html lang="en">
+<head><meta charset="UTF-8"><title>MemoryBridge dev test</title>
+<link rel="stylesheet" href="css/style.css"></head>
+<body>
+<main style="padding:2rem; max-width:900px; margin:0 auto;">
+  <h1 style="color:#c2571f">Dev test: birthday slideshow</h1>
+  <p>
+    <button id="test-add">Add 4 test photos</button>
+    <button id="test-wav">Attach 3s narration WAV</button>
+    <button id="test-export">Export test video</button>
+    <button id="test-inspect">Inspect video</button>
+    <button id="test-audiocheck">Check audio in video</button>
+    <button id="test-debugsave">Debug save steps</button>
+  </p>
+  <pre id="debug-out" style="background:#fff;padding:8px;white-space:pre-wrap;"></pre>
+  <div id="mount"></div>
+  <!-- stubs so BirthdayMaker.init() finds its upload-zone elements -->
+  <div id="bv-upload-zone" hidden></div>
+  <input type="file" id="bv-file-input" hidden />
+</main>
+<script src="js/db.js"></script>
+<script src="js/wish-assistant.js"></script>
+<script src="js/video-export.js"></script>
+<script src="js/birthday.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', async () => {
+  // Pull the REAL Birthday Video markup out of index.html.
+  const html = await fetch('index.html').then(r => r.text());
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const view = doc.getElementById('view-birthday');
+  view.hidden = false;
+  document.getElementById('mount').appendChild(view);
+
+  BirthdayMaker.init();
+
+  document.getElementById('test-add').addEventListener('click', async () => {
+    const colors = ['#c2571f', '#3d6b4f', '#4a3d6b', '#8a2f4a'];
+    const files = [];
+    for (let i = 0; i < 4; i++) {
+      const c = document.createElement('canvas'); c.width = 640; c.height = 480;
+      const x = c.getContext('2d');
+      x.fillStyle = colors[i]; x.fillRect(0, 0, 640, 480);
+      x.fillStyle = '#fff'; x.font = 'bold 80px Georgia'; x.fillText('Photo ' + (i + 1), 200, 260);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      files.push(new File([blob], `photo-${i + 1}.png`, { type: 'image/png' }));
+    }
+    BirthdayMaker._testAddFiles(files);
+  });
+
+  // Real 3-second 440 Hz WAV as narration.
+  document.getElementById('test-wav').addEventListener('click', async () => {
+    const sampleRate = 22050, seconds = 3;
+    const numSamples = Math.floor(sampleRate * seconds);
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
+    const wstr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+    wstr(0, 'RIFF'); view.setUint32(4, 36 + numSamples * 2, true); wstr(8, 'WAVE');
+    wstr(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true); wstr(36, 'data'); view.setUint32(40, numSamples * 2, true);
+    for (let i = 0; i < numSamples; i++) {
+      view.setInt16(44 + i * 2, Math.sin(2 * Math.PI * 440 * i / sampleRate) * 12000, true);
+    }
+    // go through the module's own upload path
+    const input = document.getElementById('bv-audio-input');
+    const dt = new DataTransfer();
+    dt.items.add(new File([buffer], 'narration.wav', { type: 'audio/wav' }));
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  document.getElementById('test-export').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-export');
+    const result = await BirthdayMaker._renderVideo();
+    if (result) {
+      window._lastVideo = result;
+      statusEl.textContent = `OK size=${result.blob.size} type=${result.mimeType} ext=${result.ext}`;
+    } else {
+      statusEl.textContent = 'ERROR (see export status line)';
+    }
+  });
+
+  document.getElementById('test-debugsave').addEventListener('click', async () => {
+    const out = document.getElementById('debug-out');
+    const log = (m) => { out.textContent += m + '\n'; };
+    try {
+      log('step1: collectProjectData equivalent');
+      // photos is module-private; replicate via the thumbnails
+      const imgs = [...document.querySelectorAll('.thumb-item img')];
+      log('photos found: ' + imgs.length);
+      const blobs = [];
+      for (const img of imgs) {
+        const b = await fetch(img.src).then(r => r.blob());
+        blobs.push(b);
+      }
+      log('fetched blobs: ' + blobs.map(b => b.size).join(','));
+      log('step2: saveProject');
+      await MemoryDB.saveProject({
+        title: 'DebugProject',
+        photoBlobs: blobs,
+        photoNames: imgs.map((_, i) => 'p' + i),
+        audioBlob: null,
+        settings: { name: 'Debug', message: '', theme: 'cream', secondsPerPhoto: '5' }
+      });
+      log('step3: readback');
+      const all = await MemoryDB.getAllProjects();
+      log('projects in DB: ' + all.length + ' -> ' + all.map(p => p.title).join(', '));
+    } catch (e) {
+      log('ERROR: ' + (e && (e.name + ': ' + e.message + '\n' + (e.stack || ''))));
+    }
+  });
+
+  document.getElementById('test-inspect').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-inspect');
+    if (!window._lastVideo) { statusEl.textContent = 'export first'; return; }
+    const v = document.createElement('video');
+    v.src = URL.createObjectURL(window._lastVideo.blob);
+    await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = () => rej(new Error('cannot decode')); });
+    statusEl.textContent = `duration=${v.duration.toFixed(2)}s video=${v.videoWidth}x${v.videoHeight}`;
+    try { await v.play(); await new Promise(r => setTimeout(r, 800)); v.pause();
+      statusEl.textContent += ` playOK t=${v.currentTime.toFixed(2)}`;
+    } catch (e) { statusEl.textContent += ' playFailed:' + e.name; }
+  });
+
+  document.getElementById('test-audiocheck').addEventListener('click', async () => {
+    const statusEl = document.getElementById('test-audiocheck');
+    if (!window._lastVideo) { statusEl.textContent = 'export first'; return; }
+    try {
+      const buf = await window._lastVideo.blob.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const decoded = await ctx.decodeAudioData(buf.slice(0));
+      const data = decoded.getChannelData(0);
+      let peak = 0; for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+      ctx.close();
+      statusEl.textContent = `audioOK ch=${decoded.numberOfChannels} dur=${decoded.duration.toFixed(2)}s peak=${peak.toFixed(3)}`;
+    } catch (e) {
+      statusEl.textContent = 'AUDIO DECODE FAILED: ' + e.message;
+    }
+  });
+});
+</script>
+</body>
+</html>

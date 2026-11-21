@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MemoryBridge — Talking Photos &amp; Birthday Videos</title>
+  <meta name="description" content="Turn photos into talking memories and personalized birthday slideshows. Everything stays on your device." />
+
+  <!-- PWA manifest + icons -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- iOS Safari standalone-app metadata -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MemoryBridge" />
+  <meta name="theme-color" content="#c2571f" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="app-header">
+    <button class="brand" id="brand-home" type="button" aria-label="Go to MemoryBridge home">
+      <span class="brand-icon" aria-hidden="true">💛</span>
+      <span class="brand-text">MemoryBridge</span>
+    </button>
+    <nav aria-label="Main navigation">
+      <button class="nav-btn" data-nav="home" type="button">Home</button>
+      <button class="nav-btn" data-nav="talking" type="button">Talking Photos</button>
+      <button class="nav-btn" data-nav="birthday" type="button">Birthday Video</button>
+      <button class="nav-btn" data-nav="memories" type="button">My Memories</button>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ HOME VIEW ============ -->
+    <section class="view" id="view-home" data-view="home">
+      <div class="view-inner">
+        <h1 class="page-title">Welcome to MemoryBridge</h1>
+        <p class="page-subtitle">Turn your photos into memories you can see, hear, and share. Choose what you would like to do:</p>
+
+        <div class="card-grid">
+          <button class="big-card" data-nav="talking" type="button">
+            <span class="big-card-icon" aria-hidden="true">🖼️</span>
+            <span class="big-card-title">Talking Photos</span>
+            <span class="big-card-desc">Add a photo and your own voice or story, so the picture can "speak" your memory.</span>
+            <span class="big-card-cta">Open Talking Photos →</span>
+          </button>
+
+          <button class="big-card" data-nav="birthday" type="button">
+            <span class="big-card-icon" aria-hidden="true">🎂</span>
+            <span class="big-card-title">Birthday Video Maker</span>
+            <span class="big-card-desc">Pick your favorite photos, add a name and a birthday message, and watch a lovely slideshow.</span>
+            <span class="big-card-cta">Open Birthday Video Maker →</span>
+          </button>
+        </div>
+
+        <button class="big-card" data-nav="memories" type="button" style="margin-top:1.5rem;">
+          <span class="big-card-icon" aria-hidden="true">📚</span>
+          <span class="big-card-title">My Memories</span>
+          <span class="big-card-desc">See, hear, and revisit the memories and birthday projects you saved on this device.</span>
+          <span class="big-card-cta">Open My Memories →</span>
+        </button>
+
+        <p class="privacy-note">🔒 Everything happens on your device. Your photos and stories are never uploaded to the internet.</p>
+      </div>
+    </section>
+
+    <!-- ============ TALKING PHOTOS VIEW ============ -->
+    <section class="view" id="view-talking" data-view="talking" hidden>
+      <div class="view-inner">
+        <h1 class="page-title">Talking Photos</h1>
+        <p class="page-subtitle">Step 1: Choose a photo you love. Step 2: Add your voice or story to it.</p>
+
+        <div class="panel">
+          <h2 class="panel-title">1. Choose your photo</h2>
+          <div class="upload-zone" id="tp-upload-zone" role="button" tabindex="0"
+               aria-label="Upload a photo. Click or press Enter to choose a picture from your device.">
+            <span class="upload-icon" aria-hidden="true">📷</span>
+            <span class="upload-text">Tap here to choose a photo</span>
+            <span class="upload-hint">You can also drag and drop a picture here.</span>
+          </div>
+          <input type="file" id="tp-file-input" accept="image/*" hidden />
+
+          <div class="photo-preview-area" id="tp-preview-area" hidden>
+            <img id="tp-photo-preview" alt="Your chosen photo" />
+            <button class="btn btn-secondary" id="tp-change-photo" type="button">Choose a different photo</button>
+          </div>
+        </div>
+
+        <div class="panel" id="tp-actions-panel" hidden>
+          <h2 class="panel-title">2. Add your memory</h2>
+          <p class="panel-note">Use one of these buttons to add your voice or story to the photo.</p>
+
+          <div class="btn-stack">
+            <button class="btn btn-primary btn-xl" id="tp-record-btn" type="button">🎙️ Record Voice</button>
+            <button class="btn btn-primary btn-xl" id="tp-upload-audio-btn" type="button">🎵 Upload Audio</button>
+            <button class="btn btn-primary btn-xl" id="tp-type-story-btn" type="button">✏️ Type a Story</button>
+            <button class="btn btn-primary btn-xl" id="tp-play-btn" type="button">▶️ Play Memory</button>
+          </div>
+          <input type="file" id="tp-audio-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" hidden />
+
+          <p class="save-status" id="tp-memory-status" role="status" aria-live="polite"></p>
+
+          <div class="audio-preview" id="tp-audio-preview" hidden>
+            <p class="panel-note" id="tp-audio-label"></p>
+            <audio id="tp-audio-player" controls></audio>
+          </div>
+
+          <div class="story-editor" id="tp-story-editor" hidden>
+            <label class="field-label" for="tp-story-text">Write your story about this photo:</label>
+            <textarea id="tp-story-text" class="text-area" rows="5"
+              placeholder="Example: This was our trip to the lake in the summer of 1995. Grandma caught the biggest fish!"></textarea>
+            <div class="btn-row">
+              <button class="btn btn-secondary" id="tp-save-story" type="button">Save Story</button>
+              <button class="btn btn-secondary" id="tp-read-aloud" type="button">🔊 Read Aloud</button>
+              <button class="btn btn-secondary" id="tp-stop-reading" type="button">⏹️ Stop Reading</button>
+            </div>
+            <p class="save-status" id="tp-story-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="memory-stage" id="tp-memory-stage" hidden>
+            <img id="tp-memory-photo" alt="Your photo, playing with its memory" />
+            <p class="panel-note" id="tp-memory-caption"></p>
+          </div>
+
+          <div class="memory-actions">
+            <h2 class="panel-title">3. Keep or share your memory</h2>
+            <p class="panel-note">Make a short video of this photo with its sound, then save it or send it to family.</p>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" id="tp-download-btn" type="button">💾 Download Memory</button>
+              <button class="btn btn-primary" id="tp-share-btn" type="button">📤 Share with Family</button>
+            </div>
+
+            <div class="export-progress" id="tp-export-progress" hidden>
+              <div class="export-progress-bar" id="tp-export-bar"></div>
+            </div>
+            <p class="save-status" id="tp-export-status" role="status" aria-live="polite"></p>
+
+            <div class="memory-actions" style="margin-top:1rem; border-top:none; padding-top:0;">
+              <div class="btn-row">
+                <button class="btn btn-primary" id="tp-save-btn" type="button">💛 Save to My Memories</button>
+              </div>
+              <p class="save-status" id="tp-save-status" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BIRTHDAY VIDEO VIEW ============ -->
+    <section class="view" id="view-birthday" data-view="birthday" hidden>
+      <div class="view-inner">
+        <h1 class="page-title">Birthday Video Maker</h1>
+        <p class="page-subtitle">Pick photos, write a birthday message, and enjoy the slideshow right here on your screen.</p>
+
+        <div class="panel">
+          <h2 class="panel-title">1. Choose your photos</h2>
+          <div class="upload-zone" id="bv-upload-zone" role="button" tabindex="0"
+               aria-label="Upload three to ten photos. Click or press Enter to choose pictures from your device.">
+            <span class="upload-icon" aria-hidden="true">🖼️</span>
+            <span class="upload-text">Tap here to choose photos</span>
+            <span class="upload-hint">Choose 3 to 10 pictures. You can pick many at once, or drag and drop them here.</span>
+          </div>
+          <input type="file" id="bv-file-input" accept="image/*" multiple hidden />
+
+          <ul class="thumb-list" id="bv-thumb-list" aria-label="Photos you have chosen"></ul>
+          <p class="empty-hint" id="bv-empty-hint">No photos chosen yet. Your pictures will appear here.</p>
+          <button class="btn btn-secondary" id="bv-clear-photos" type="button" hidden>Remove all photos</button>
+          <p class="save-status" id="bv-photo-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">2. Add the birthday details</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field-label" for="bv-name">Who is the birthday star?</label>
+              <input type="text" id="bv-name" class="text-input" placeholder="Example: Grandma Rose" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="bv-message">Your birthday message</label>
+              <textarea id="bv-message" class="text-area" rows="3"
+                placeholder="Example: Happy Birthday! We love you so much."></textarea>
+            </div>
+            <div class="field">
+              <label class="field-label" for="bv-theme">Pick a birthday theme</label>
+              <select id="bv-theme" class="text-input">
+                <option value="cream" selected>Warm Cream (soft and classic)</option>
+                <option value="gold">Golden Celebration (dark and shiny)</option>
+                <option value="garden">Garden Morning (fresh and green)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="bv-duration">Seconds per photo (used when there is no voice message)</label>
+              <select id="bv-duration" class="text-input">
+                <option value="3">3 seconds (quick)</option>
+                <option value="5" selected>5 seconds (recommended)</option>
+                <option value="8">8 seconds (relaxed)</option>
+              </select>
+            </div>
+            <div class="field">
+              <span class="field-label">Optional: your voice message</span>
+              <div class="btn-row">
+                <button class="btn btn-secondary" id="bv-record-btn" type="button">🎙️ Record Voice Message</button>
+                <button class="btn btn-secondary" id="bv-upload-audio-btn" type="button">🎵 Upload Audio</button>
+              </div>
+              <input type="file" id="bv-audio-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" hidden />
+              <p class="save-status" id="bv-audio-status" role="status" aria-live="polite"></p>
+              <div class="audio-preview" id="bv-audio-preview" hidden>
+                <p class="panel-note" id="bv-audio-label"></p>
+                <audio id="bv-audio-player" controls></audio>
+              </div>
+            </div>
+            <div class="field">
+              <span class="field-label">Need help writing the birthday wish?</span>
+              <button class="btn btn-secondary" id="bv-wish-open-btn" type="button">✨ Help Me Write a Birthday Wish</button>
+            </div>
+          </div>
+
+          <div class="wish-assistant" id="bv-wish-panel" hidden>
+            <h3 class="panel-title">✨ Birthday Wish Helper</h3>
+            <p class="panel-note">Answer a few questions and we will suggest birthday wishes from our
+              ready-made templates. <strong>This is not AI</strong> — the suggestions come from template
+              sentences stored in the app, and nothing you type leaves your device.</p>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="wish-recipient">Who is the wish for?</label>
+                <input type="text" id="wish-recipient" class="text-input" placeholder="Example: Grandma Rose" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="wish-relationship">This person is your…</label>
+                <select id="wish-relationship" class="text-input">
+                  <option value="mother">Mother</option>
+                  <option value="father">Father</option>
+                  <option value="grandmother">Grandmother</option>
+                  <option value="grandfather">Grandfather</option>
+                  <option value="spouse">Husband / Wife</option>
+                  <option value="sibling">Brother / Sister</option>
+                  <option value="friend">Friend</option>
+                  <option value="family" selected>Other family member</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="wish-language">Language for the wish</label>
+                <select id="wish-language" class="text-input">
+                  <option value="en" selected>English</option>
+                  <option value="ms">Bahasa Malaysia</option>
+                  <option value="zh">中文 (Chinese)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="wish-tone">What feeling should it have?</label>
+                <select id="wish-tone" class="text-input">
+                  <option value="warm" selected>Warm and loving</option>
+                  <option value="joyful">Joyful and fun</option>
+                  <option value="blessing">Gentle blessing</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:0.85rem;">
+              <button class="btn btn-primary" id="wish-generate-btn" type="button">✨ Show Me 3 Wishes</button>
+            </div>
+            <p class="save-status" id="wish-status" role="status" aria-live="polite"></p>
+
+            <div class="wish-suggestions" id="wish-suggestions" hidden>
+              <p class="field-label" style="margin:0.4rem 0;">Choose one, or change the answers and generate again:</p>
+              <div id="wish-options"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">3. Watch and share the slideshow</h2>
+          <div class="slideshow-controls">
+            <button class="btn btn-primary" id="bv-play" type="button">▶️ Play</button>
+            <button class="btn btn-secondary" id="bv-pause" type="button">⏸️ Pause</button>
+            <button class="btn btn-secondary" id="bv-restart" type="button">🔄 Restart</button>
+          </div>
+          <p class="save-status" id="bv-slideshow-status" role="status" aria-live="polite"></p>
+
+          <div class="slideshow-stage" id="bv-stage" hidden>
+            <canvas id="bv-canvas" width="1280" height="800" aria-label="Slideshow preview"></canvas>
+          </div>
+
+          <div class="slideshow-controls" style="margin-top:1rem;">
+            <button class="btn btn-primary" id="bv-download-btn" type="button">💾 Download Video</button>
+            <button class="btn btn-primary" id="bv-share-btn" type="button">📤 Share with Family</button>
+          </div>
+          <div class="export-progress" id="bv-export-progress" hidden>
+            <div class="export-progress-bar" id="bv-export-bar"></div>
+          </div>
+          <p class="save-status" id="bv-export-status" role="status" aria-live="polite"></p>
+
+          <div class="memory-actions" style="margin-top:1rem;">
+            <div class="btn-row">
+              <button class="btn btn-primary" id="bv-save-btn" type="button">💛 Save Project</button>
+              <button class="btn btn-primary" id="bv-save-finished-btn" type="button">🌟 Save Finished Video Memory</button>
+            </div>
+            <p class="save-status" id="bv-save-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MY MEMORIES VIEW ============ -->
+    <section class="view" id="view-memories" data-view="memories" hidden>
+      <div class="view-inner">
+        <h1 class="page-title">My Memories</h1>
+        <p class="page-subtitle">Your saved photos, stories, and birthday projects live here on this device.</p>
+
+        <div class="storage-note">
+          <p><strong>Where are my memories kept?</strong> They are saved only on this device, inside this browser.
+          This is not a cloud backup — if the app is deleted or browser data is cleared, saved memories are lost too.
+          Use the Download button on a memory to keep a copy outside the app.</p>
+        </div>
+
+        <p class="storage-usage" id="mm-storage-usage" role="status" aria-live="polite"></p>
+
+        <div class="card-grid" id="mm-card-list" aria-label="Saved memories and projects"></div>
+        <p class="empty-hint" id="mm-empty-hint">Nothing saved yet. Create a memory in Talking Photos or a project in Birthday Video Maker, then press the yellow Save button.</p>
+
+        <div class="memory-stage" id="mm-viewer" hidden>
+          <h2 class="panel-title" id="mm-viewer-title"></h2>
+          <img id="mm-viewer-photo" alt="Saved memory photo" />
+          <p class="panel-note" id="mm-viewer-story"></p>
+          <audio id="mm-viewer-audio" controls hidden></audio>
+          <div class="btn-row" style="margin-top:0.75rem;">
+            <button class="btn btn-secondary" id="mm-viewer-download" type="button">💾 Download</button>
+            <button class="btn btn-secondary" id="mm-viewer-close" type="button">Close</button>
+          </div>
+        </div>
+
+        <div class="rename-dialog" id="mm-rename-dialog" hidden>
+          <h2 class="panel-title">Rename this memory</h2>
+          <label class="field-label" for="mm-rename-input">New name</label>
+          <input type="text" id="mm-rename-input" class="text-input" />
+          <div class="btn-row" style="margin-top:0.75rem;">
+            <button class="btn btn-primary" id="mm-rename-confirm" type="button">Save Name</button>
+            <button class="btn btn-secondary" id="mm-rename-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>MemoryBridge — made with love for families. Runs entirely on your device.</p>
+  </footer>
+
+  <script src="js/storage.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/wish-assistant.js"></script>
+  <script src="js/video-export.js"></script>
+  <script src="js/talking.js"></script>
+  <script src="js/birthday.js"></script>
+  <script src="js/memories.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Register the static-shell service worker (PWA offline support).
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch((err) => {
+          console.warn('Service worker could not register:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
